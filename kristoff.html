@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Kristoff Knowledge Hub</title>
+<style>
+    body {
+        background: #0d0d0d;
+        color: #e0e0e0;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    h1 { color: #00eaff; }
+    .section {
+        margin: 40px auto;
+        padding: 20px;
+        width: 80%;
+        background: #1a1a1a;
+        border-radius: 10px;
+        box-shadow: 0 0 20px #00eaff55;
+    }
+    canvas {
+        background: #111;
+        border: 2px solid #00eaff;
+        margin-top: 10px;
+    }
+    button {
+        padding: 10px 20px;
+        margin: 10px;
+        background: #00eaff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<h1>Kristoff Knowledge Hub</h1>
+
+<div class="section">
+    <h2>Kristoff Knowledge Quote</h2>
+    <p><i>"Knowledge is not stored — it evolves.  
+    Every idea you build becomes a new universe waiting to be explored."</i></p>
+</div>
+
+<div class="section">
+    <h2>Concept</h2>
+    <p>This page blends Kristoff’s creativity, logic, and digital mastery into one interactive space.  
+    Games, ideas, and code live together — just like a real OS playground.</p>
+</div>
+
+<!-- ===================== TETRIS ===================== -->
+<div class="section">
+    <h2>Tetris</h2>
+    <canvas id="tetris" width="240" height="400"></canvas>
+</div>
+
+<script>
+// --- TETRIS ENGINE ---
+const canvas = document.getElementById("tetris");
+const ctx = canvas.getContext("2d");
+ctx.scale(20, 20);
+
+function arenaSweep() {
+    let rowCount = 1;
+    outer: for (let y = arena.length - 1; y > 0; y--) {
+        for (let x = 0; x < arena[y].length; x++) {
+            if (arena[y][x] === 0) continue outer;
+        }
+        const row = arena.splice(y, 1)[0].fill(0);
+        arena.unshift(row);
+        y++;
+    }
+}
+
+function collide(arena, player) {
+    const [m, o] = [player.matrix, player.pos];
+    for (let y = 0; y < m.length; y++) {
+        for (let x = 0; x < m[y].length; x++) {
+            if (m[y][x] !== 0 &&
+                (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function createMatrix(w, h) {
+    const matrix = [];
+    while (h--) matrix.push(new Array(w).fill(0));
+    return matrix;
+}
+
+function createPiece(type) {
+    if (type === "T") return [[0,1,0],[1,1,1],[0,0,0]];
+    if (type === "O") return [[1,1],[1,1]];
+    if (type === "L") return [[0,1,0],[0,1,0],[0,1,1]];
+    if (type === "J") return [[0,1,0],[0,1,0],[1,1,0]];
+    if (type === "I") return [[1,1,1,1]];
+    if (type === "S") return [[0,1,1],[1,1,0],[0,0,0]];
+    if (type === "Z") return [[1,1,0],[0,1,1],[0,0,0]];
+}
+
+function drawMatrix(matrix, offset) {
+    matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                ctx.fillStyle = "#00eaff";
+                ctx.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+        });
+    });
+}
+
+function draw() {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawMatrix(arena, {x:0,y:0});
+    drawMatrix(player.matrix, player.pos);
+}
+
+function merge(arena, player) {
+    player.matrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) arena[y + player.pos.y][x + player.pos.x] = value;
+        });
+    });
+}
+
+function playerDrop() {
+    player.pos.y++;
+    if (collide(arena, player)) {
+        player.pos.y--;
+        merge(arena, player);
+        playerReset();
+        arenaSweep();
+    }
+    dropCounter = 0;
+}
+
+function playerMove(dir) {
+    player.pos.x += dir;
+    if (collide(arena, player)) player.pos.x -= dir;
+}
+
+function playerReset() {
+    const pieces = "TJLOSZI";
+    player.matrix = createPiece(pieces[Math.floor(Math.random()*pieces.length)]);
+    player.pos.y = 0;
+    player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
+}
+
+let dropCounter = 0;
+let dropInterval = 500;
+let lastTime = 0;
+
+function update(time = 0) {
+    const delta = time - lastTime;
+    lastTime = time;
+    dropCounter += delta;
+    if (dropCounter > dropInterval) playerDrop();
+    draw();
+    requestAnimationFrame(update);
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") playerMove(-1);
+    if (e.key === "ArrowRight") playerMove(1);
+    if (e.key === "ArrowDown") playerDrop();
+});
+
+const arena = createMatrix(12, 20);
+const player = { pos: {x:0,y:0}, matrix: null };
+playerReset();
+update();
+</script>
+
+<!-- ===================== CAPTURE THE FLAG ===================== -->
+<div class="section">
+    <h2>Capture the Flag</h2>
+    <p>Click the flag to capture it</p>
+    <button onclick="captureFlag()">🏳️</button>
+    <p id="flagStatus"></p>
+</div>
+
+<script>
+function captureFlag() {
+    document.getElementById("flagStatus").innerText = "Flag Captured!";
+}
+</script>
+
+<!-- ===================== AI EATER (Snake Game) ===================== -->
+<div class="section">
+    <h2>AI Eater</h2>
+    <canvas id="snake" width="300" height="300"></canvas>
+</div>
+
+<script>
+const snakeCanvas = document.getElementById("snake");
+const sctx = snakeCanvas.getContext("2d");
+
+let snake = [{x:150,y:150}];
+let food = {x:100,y:100};
+let dx = 10, dy = 0;
+
+function drawSnake() {
+    sctx.fillStyle = "#00eaff";
+    snake.forEach(p => sctx.fillRect(p.x, p.y, 10, 10));
+}
+
+function drawFood() {
+    sctx.fillStyle = "red";
+    sctx.fillRect(food.x, food.y, 10, 10);
+}
+
+function moveSnake() {
+    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+    snake.unshift(head);
+    if (head.x === food.x && head.y === food.y) {
+        food.x = Math.floor(Math.random()*30)*10;
+        food.y = Math.floor(Math.random()*30)*10;
+    } else {
+        snake.pop();
+    }
+}
+
+function updateSnake() {
+    sctx.fillStyle = "#000";
+    sctx.fillRect(0,0,300,300);
+    drawFood();
+    moveSnake();
+    drawSnake();
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "ArrowUp") {dx=0;dy=-10;}
+    if (e.key === "ArrowDown") {dx=0;dy=10;}
+    if (e.key === "ArrowLeft") {dx=-10;dy=0;}
+    if (e.key === "ArrowRight") {dx=10;dy=0;}
+});
+
+setInterval(updateSnake, 100);
+</script>
+
+<!-- ===================== TIC TAC TOE ===================== -->
+<div class="section">
+    <h2>Tic Tac Toe</h2>
+    <table id="board" style="margin:auto;font-size:40px;">
+        <tr>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+        </tr>
+        <tr>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+        </tr>
+        <tr>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+            <td onclick="play(this)"></td>
+        </tr>
+    </table>
+    <p id="winner"></p>
+</div>
+
+<script>
+let turn = "X";
+
+function play(cell) {
+    if (cell.innerText !== "") return;
+    cell.innerText = turn;
+    turn = turn === "X" ? "O" : "X";
+}
+</script>
+
+</body>
+</html>
